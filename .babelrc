@@ -1,0 +1,26 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "node": "8.9.4"
+        }
+      }
+    ],
+    "stage-0"
+  ],
+  "plugins": [
+    "inline-dotenv",
+    [
+      "module-resolver",
+      {
+        "root": ["./src"],
+        "alias": {
+          "bcrypt": "bcrypt-nodejs"
+        }
+      }
+    ]
+  ],
+  "sourceMaps": true
+}
