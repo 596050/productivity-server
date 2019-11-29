@@ -7,17 +7,13 @@ export const authenticationMiddleware = (req, res, next) => {
   const JWT_SECRET = process.env.JWT_SECRET;
   const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION;
   const EXPIRATION = parseInt(TOKEN_EXPIRATION, 10);
-  console.log("SECRET:", JWT_SECRET);
   if (!authorization) {
-    console.log("===== NO AUTH HEADER ======");
     return unauthorized(res);
   }
   const token = authorization.replace("Bearer: ", "");
   if (!token) {
-    console.log("===== NO TOKEN ======");
     return unauthorized(res);
   }
-  console.log(`TOKEN:"${token}"`);
   return jwt.verify(token, JWT_SECRET, (err, decoded) => {
     const now = Date.now();
     if (

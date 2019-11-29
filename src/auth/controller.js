@@ -1,4 +1,4 @@
-import Controller from "common/controller";
+import { Controller } from "common/controller";
 import { User } from "user";
 
 const authController = new Controller("/authenticate");

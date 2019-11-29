@@ -48,10 +48,14 @@ app.use(projectController.baseRoute, projectController.router);
 app.use(boardController.baseRoute, boardController.router);
 app.use(cardController.baseRoute, cardController.router);
 app.use(labelController.baseRoute, labelController.router);
+app.use((error, req, res, next) => {
+  console.error(error);
+  res.status(500).end();
+});
 
 app.listen(SERVER_PORT, err => {
   if (err) {
     throw err;
   }
-  console.log(`Server is listening on port ${SERVER_PORT}.`);
+  console.info(`Server is listening on port ${SERVER_PORT}.`);
 });

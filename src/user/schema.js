@@ -41,7 +41,6 @@ const userSchema = new Schema({
 function hashPassword(next) {
   let user = this;
   let modified = false;
-  console.log(user._update);
 
   if (user._update) {
     modified = true;
@@ -75,7 +74,6 @@ userSchema.statics.authorize = function(req) {
   return this.findOne({
     username: req.user.username
   }).then(user => {
-    console.log("findOne.then.user", user);
     if (
       user &&
       (req.params.id === undefined ||

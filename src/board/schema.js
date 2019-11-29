@@ -96,7 +96,6 @@ boardSchema.statics.authorize = function(req) {
       if (board) {
         user = board.users.find(user => user.user.toString() === req.user.id);
       }
-      console.log("USER", user, board);
       return handleBoardAuth(req, user, board);
     });
 };

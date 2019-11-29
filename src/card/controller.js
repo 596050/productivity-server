@@ -1,6 +1,6 @@
 import { Card } from "./model";
-import { createAuthorizationMiddleware } from "auth";
-import Controller from "common/controller";
+import { authenticationMiddleware } from "auth";
+import { Controller } from "common/controller";
 const cardController = new Controller("/cards");
 const INTERNAL_SERVER_ERROR = "Internal Server Error";
 
@@ -10,7 +10,7 @@ const COLUMN = "COLUMN";
 const CHECKLIST = "CHECKLIST";
 const DUEDATE = "DUEDATE";
 
-cardController.post("/", createAuthorizationMiddleware(Card), (req, res) => {
+cardController.post("/", authenticationMiddleware, (req, res) => {
   const newCard = new Card(req.body);
   return newCard
     .save()
@@ -23,7 +23,7 @@ cardController.post("/", createAuthorizationMiddleware(Card), (req, res) => {
     });
 });
 
-cardController.get("/:id", createAuthorizationMiddleware(Card), (req, res) => {
+cardController.get("/:id", authenticationMiddleware, (req, res) => {
   Card.findById(req.params.id)
     .populate("labels")
     .then(card => {
@@ -38,7 +38,7 @@ cardController.get("/:id", createAuthorizationMiddleware(Card), (req, res) => {
     });
 });
 
-cardController.get("/", createAuthorizationMiddleware(Card), (req, res) => {
+cardController.get("/", authenticationMiddleware, (req, res) => {
   Card.find()
     .then(cards => {
       if (!cards) {
@@ -52,7 +52,7 @@ cardController.get("/", createAuthorizationMiddleware(Card), (req, res) => {
     });
 });
 
-cardController.put("/:id", createAuthorizationMiddleware(Card), (req, res) => {
+cardController.put("/:id", authenticationMiddleware, (req, res) => {
   const put = new Card(req.body);
   put
     .validate()
@@ -74,65 +74,53 @@ cardController.put("/:id", createAuthorizationMiddleware(Card), (req, res) => {
     });
 });
 
-cardController.patch(
-  "/:id",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findOneAndUpdate(
-      { _id: req.params.id },
-      { $set: req.body },
-      {
-        new: true
-      }
-    )
-      .then(card => {
-        return res.status(200).json(card);
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
-      });
-  }
-);
+cardController.patch("/:id", authenticationMiddleware, (req, res) => {
+  Card.findOneAndUpdate(
+    { _id: req.params.id },
+    { $set: req.body },
+    {
+      new: true
+    }
+  )
+    .then(card => {
+      return res.status(200).json(card);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
-cardController.delete(
-  "/:id",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.remove({ _id: req.params.id })
-      .then(() => {
-        return res.status(204).json("Card deleted.");
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
-      });
-  }
-);
+cardController.delete("/:id", authenticationMiddleware, (req, res) => {
+  Card.remove({ _id: req.params.id })
+    .then(() => {
+      return res.status(204).json("Card deleted.");
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 // Comments
 
-cardController.post(
-  "/:id/comment",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .then(card => {
-        card.addComment(req.body, req.user);
-        card.save().then(card => {
-          return res.json(card);
-        });
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
+cardController.post("/:id/comment", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .then(card => {
+      card.addComment(req.body, req.user);
+      card.save().then(card => {
+        return res.json(card);
       });
-  }
-);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.get(
   "/:id/comment/:activityId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -160,7 +148,7 @@ cardController.get(
 // TODO: Could get all comments for a project and/or board?
 cardController.get(
   "/:id/comment/:userId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -179,28 +167,24 @@ cardController.get(
   }
 );
 
-cardController.get(
-  "/:id/comment",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .populate(["activity"])
-      .then(card => {
-        if (!card) {
-          return res.status(404).json("Card not found.");
-        }
-        return res.status(200).json(card.text);
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
-      });
-  }
-);
+cardController.get("/:id/comment", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .populate(["activity"])
+    .then(card => {
+      if (!card) {
+        return res.status(404).json("Card not found.");
+      }
+      return res.status(200).json(card.text);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.patch(
   "/:id/comment/:activityId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -221,7 +205,7 @@ cardController.patch(
 
 cardController.delete(
   "/:id/comment/:activityId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -242,27 +226,23 @@ cardController.delete(
 
 // Labels
 
-cardController.post(
-  "/:id/label",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .then(card => {
-        card.addLabel(req.body, req.user);
-        card.save().then(card => {
-          return res.json(card);
-        });
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
+cardController.post("/:id/label", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .then(card => {
+      card.addLabel(req.body, req.user);
+      card.save().then(card => {
+        return res.json(card);
       });
-  }
-);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.get(
   "/:id/label/:labelId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .populate(["labels"])
@@ -279,28 +259,24 @@ cardController.get(
   }
 );
 
-cardController.get(
-  "/:id/label",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .populate("labels")
-      .then(card => {
-        if (!card) {
-          return res.status(404).json("Card not found.");
-        }
-        return res.status(200).json(card.labels);
-      })
-      .catch(err => {
-        console.log(err.messsage);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
-      });
-  }
-);
+cardController.get("/:id/label", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .populate("labels")
+    .then(card => {
+      if (!card) {
+        return res.status(404).json("Card not found.");
+      }
+      return res.status(200).json(card.labels);
+    })
+    .catch(err => {
+      console.log(err.messsage);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.delete(
   "/:id/label/:labelId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -321,27 +297,23 @@ cardController.delete(
 
 // Checklists
 
-cardController.post(
-  "/:id/checklist",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .then(card => {
-        card.addChecklist(req.body, req.user);
-        card.save().then(card => {
-          return res.json(card);
-        });
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
+cardController.post("/:id/checklist", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .then(card => {
+      card.addChecklist(req.body, req.user);
+      card.save().then(card => {
+        return res.json(card);
       });
-  }
-);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.get(
   "/:id/checklist/:checklistId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -360,27 +332,23 @@ cardController.get(
   }
 );
 
-cardController.get(
-  "/:id/checklist",
-  createAuthorizationMiddleware(Card),
-  (req, res) => {
-    Card.findById(req.params.id)
-      .then(card => {
-        if (!card) {
-          return res.status(404).json("Card not found.");
-        }
-        return res.status(200).json(card.checklists);
-      })
-      .catch(err => {
-        console.log(err.message);
-        return res.status(500).json(INTERNAL_SERVER_ERROR);
-      });
-  }
-);
+cardController.get("/:id/checklist", authenticationMiddleware, (req, res) => {
+  Card.findById(req.params.id)
+    .then(card => {
+      if (!card) {
+        return res.status(404).json("Card not found.");
+      }
+      return res.status(200).json(card.checklists);
+    })
+    .catch(err => {
+      console.log(err.message);
+      return res.status(500).json(INTERNAL_SERVER_ERROR);
+    });
+});
 
 cardController.patch(
   "/:id/checklist/:checklistId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -397,7 +365,7 @@ cardController.patch(
 // TODO: Are these the correct properties to populate?
 cardController.delete(
   "/:id/checklist/:checklistId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .populate(["activity", "checklists", "checklists.items"])
@@ -420,7 +388,7 @@ cardController.delete(
 
 cardController.post(
   "/:id/checklist/:checklistId/item",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -442,7 +410,7 @@ cardController.post(
 
 cardController.get(
   "/:id/checklist/:checklistId/item/:checklistItemId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -464,7 +432,7 @@ cardController.get(
 
 cardController.get(
   "/:id/checklist/:checklistId/item",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -484,7 +452,7 @@ cardController.get(
 
 cardController.patch(
   "/:id/checklist/:checklistId/item/:checklistItemId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -525,7 +493,7 @@ cardController.patch(
 
 cardController.put(
   "/:id/checklist/:checklistId/item/:checklistItemId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
@@ -551,7 +519,7 @@ cardController.put(
 
 cardController.delete(
   "/:id/checklist/:checklistId/item/:checklistItemId",
-  createAuthorizationMiddleware(Card),
+  authenticationMiddleware,
   (req, res) => {
     Card.findById(req.params.id)
       .then(card => {
